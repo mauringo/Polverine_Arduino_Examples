@@ -1,0 +1,16 @@
+*.zip
+*.a
+*.lib
+*.bin
+*.elf
+*.o
+*.so
+*.dll
+*.dylib
+.pio/
+.DS_Store
+__pycache__/
+lib/
+private/
+.vscode/c_cpp_properties.json
+Arduino_project/libraries/

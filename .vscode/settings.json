@@ -1,0 +1,46 @@
+{
+  "workbench.statusBar.visible": true,
+  "platformio-ide.showEditorTitleShortcuts": true,
+  "platformio-ide.toolbar": [
+    {
+      "text": "$(home)",
+      "tooltip": "PlatformIO Home",
+      "commands": "platformio-ide.showHome"
+    },
+    {
+      "text": "$(check) Build",
+      "tooltip": "Build Polverine",
+      "commands": [
+        {
+          "id": "workbench.action.tasks.runTask",
+          "args": "Build Polverine"
+        }
+      ]
+    },
+    {
+      "text": "$(arrow-up) Upload",
+      "tooltip": "Upload Polverine",
+      "commands": [
+        {
+          "id": "workbench.action.tasks.runTask",
+          "args": "Upload Polverine"
+        }
+      ]
+    },
+    {
+      "text": "$(plug) Serial",
+      "tooltip": "Serial JSON",
+      "commands": [
+        {
+          "id": "workbench.action.tasks.runTask",
+          "args": "Serial JSON"
+        }
+      ]
+    },
+    {
+      "text": "$(debug-alt) Debug",
+      "tooltip": "Debug Polverine over USB JTAG",
+      "commands": "workbench.action.debug.start"
+    }
+  ]
+}

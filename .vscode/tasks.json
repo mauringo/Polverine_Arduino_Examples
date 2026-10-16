@@ -1,0 +1,76 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Polverine",
+      "type": "process",
+      "command": "${userHome}/.platformio/penv/bin/pio",
+      "args": [
+        "run",
+        "-e",
+        "polverine-full"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$platformio"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Upload Polverine",
+      "type": "process",
+      "command": "${userHome}/.platformio/penv/bin/pio",
+      "args": [
+        "run",
+        "-e",
+        "polverine-full",
+        "-t",
+        "upload"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$platformio"
+      ]
+    },
+    {
+      "label": "Serial JSON",
+      "type": "process",
+      "command": "${userHome}/.platformio/penv/bin/pio",
+      "args": [
+        "device",
+        "monitor",
+        "-b",
+        "115200"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$platformio"
+      ]
+    },
+    {
+      "label": "Build Polverine Debug",
+      "type": "process",
+      "command": "${userHome}/.platformio/penv/bin/pio",
+      "args": [
+        "run",
+        "-e",
+        "polverine-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$platformio"
+      ]
+    }
+  ]
+}
