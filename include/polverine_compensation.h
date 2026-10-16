@@ -4,7 +4,7 @@
 
 // Same table selection and polynomial as BlackIoT's BSEC integration.
 // BSEC uses this heat-source offset to compensate BOTH temperature and humidity.
-inline float polverineTemperatureOffset(float rawTemperatureC) {
+inline float polverineReferenceTemperatureOffset(float rawTemperatureC) {
     for (const auto &profile : temp_profile_tab) {
         if (profile.client_id != TEMPERATURE_PROFILE ||
             profile.map.bmv080_duty_cycle_period_s != BMV080_CYCLE_SECONDS) continue;
@@ -18,4 +18,12 @@ inline float polverineTemperatureOffset(float rawTemperatureC) {
         }
     }
     return 0; // Outside the reference table's supported ranges.
+}
+
+// Apply this board's calibration on top of the original Wi-Fi table.
+// Feed the combined offset to BSEC, so it compensates temperature AND humidity.
+inline float polverineTemperatureOffset(float rawTemperatureC) {
+    const float referenceOffset = polverineReferenceTemperatureOffset(rawTemperatureC);
+    if (referenceOffset == 0) return 0; // No calibration outside the table's ranges.
+    return referenceOffset + TEMPERATURE_CALIBRATION_EXTRA_C;
 }

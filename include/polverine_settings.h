@@ -10,3 +10,9 @@ constexpr int BMV080_MOSI = 11;
 constexpr int BMV080_CS = 10;
 constexpr unsigned BMV080_CYCLE_SECONDS = 60;
 constexpr unsigned TEMPERATURE_PROFILE = 0;
+
+// Provisional one-point calibration for this board/setup:
+// reported ~39 C versus estimated room ~25 C -> add 14 C to BSEC's heat source.
+// Positive values LOWER compensated temperature and also adjust humidity.
+// Refine with a nearby reference thermometer after thermal stabilization.
+constexpr float TEMPERATURE_CALIBRATION_EXTRA_C = 14.0f;

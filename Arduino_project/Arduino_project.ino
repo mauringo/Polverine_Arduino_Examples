@@ -58,6 +58,12 @@ void onData(const bme69xData raw, const bsecOutputs outputs, const Bsec3) {
     data["pressure_pa"] = raw.pressure;
     data["raw_humidity_pct"] = raw.humidity;
     data["gas_resistance_ohm"] = raw.gas_resistance;
+#ifdef USE_BMV080
+    if (pmReady) {
+        data["heat_source_offset_c"] = polverineTemperatureOffset(raw.temperature);
+        data["temperature_calibration_extra_c"] = TEMPERATURE_CALIBRATION_EXTRA_C;
+    }
+#endif
     for (uint8_t i = 0; i < outputs.nOutputs; ++i) {
         const auto &o = outputs.output[i];
         switch (o.sensor_id) {
