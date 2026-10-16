@@ -18,6 +18,8 @@ BMV080_7Semi particulate;
 bool pmReady = false;
 #endif
 bool ready = false;
+uint32_t lastBmeOutputMs = 0;
+uint32_t bmeOutputCount = 0;
 
 void printJson(const JsonDocument &data) {
     serializeJson(data, Serial);
@@ -32,8 +34,23 @@ void status(const char *device, int code) {
     printJson(data);
 }
 
+void reportBmeStatus(const char *stage) {
+    JsonDocument data;
+    data["type"] = "status";
+    data["device"] = "bme690";
+    data["stage"] = stage;
+    data["ready"] = ready;
+    data["bsec_status"] = sensor.status;
+    data["sensor_status"] = sensor.sensor.status;
+    data["data_status"] = sensor.sensor.getAllData()[0].status;
+    data["output_count"] = bmeOutputCount;
+    printJson(data);
+}
+
 void onData(const bme69xData raw, const bsecOutputs outputs, const Bsec3) {
     if (!outputs.nOutputs) return;
+    lastBmeOutputMs = millis();
+    ++bmeOutputCount;
     JsonDocument data;
     data["type"] = "bme690";
     data["time_ms"] = outputs.output[0].time_stamp / INT64_C(1000000);
@@ -52,9 +69,7 @@ void onData(const bme69xData raw, const bsecOutputs outputs, const Bsec3) {
             case BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY: data["humidity_pct"] = o.signal; break;
             case BSEC_OUTPUT_STATIC_IAQ: data["static_iaq"] = o.signal; break;
             case BSEC_OUTPUT_CO2_EQUIVALENT: data["co2_equivalent_ppm"] = o.signal; break;
-            case BSEC_OUTPUT_BREATH_VOC_EQUIVALENT: data["voc_equivalent_ppm"] = o.signal; break;
             case BSEC_OUTPUT_STABILIZATION_STATUS: data["stabilized"] = o.signal; break;
-            case BSEC_OUTPUT_GAS_PERCENTAGE: data["gas_percentage"] = o.signal; break;
             case BSEC_OUTPUT_RUN_IN_STATUS: data["run_in"] = o.signal; break;
             default: break;
         }
@@ -76,22 +91,27 @@ void setup() {
 #endif
     // 2. Apply Polverine's BME690 profile and temperature compensation.
     ready = sensor.begin(BME69X_I2C_ADDR_LOW, Wire);
-    if (ready) ready = sensor.setConfig(bsec3_profile_data, sizeof(bsec3_profile_data));
+    reportBmeStatus("begin");
+    if (ready) {
+        ready = sensor.setConfig(bsec3_profile_data, sizeof(bsec3_profile_data));
+        reportBmeStatus("set_config");
+    }
 #ifdef USE_BMV080
     // Apply the board table only when its matching BMV080 heating mode is active.
     if (pmReady) sensor.setTemperatureOffsetCallback(polverineTemperatureOffset);
 #endif
-    // 3. Ask BSEC for the same IAQ outputs as the reference demo.
+    // 3. Subscribe to outputs accepted by the BME690 IAQ profile.
+    // Breath-VOC equivalent from the older demo is rejected with BSEC -35.
     bsecSensor outputs[] = {BSEC_OUTPUT_IAQ, BSEC_OUTPUT_RAW_TEMPERATURE,
         BSEC_OUTPUT_RAW_PRESSURE, BSEC_OUTPUT_RAW_HUMIDITY, BSEC_OUTPUT_RAW_GAS,
         BSEC_OUTPUT_STABILIZATION_STATUS, BSEC_OUTPUT_RUN_IN_STATUS,
         BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_TEMPERATURE,
         BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
-        BSEC_OUTPUT_STATIC_IAQ, BSEC_OUTPUT_CO2_EQUIVALENT, BSEC_OUTPUT_BREATH_VOC_EQUIVALENT,
-        BSEC_OUTPUT_GAS_PERCENTAGE};
+        BSEC_OUTPUT_STATIC_IAQ, BSEC_OUTPUT_CO2_EQUIVALENT};
     if (ready) ready = sensor.updateSubscription(outputs, ARRAY_LEN(outputs), BSEC3_PROFILE_SAMPLE_RATE);
     sensor.attachCallback(onData);
-    status("bme690", ready ? 0 : -1);
+    reportBmeStatus("subscription");
+    lastBmeOutputMs = millis();
 }
 
 void loop() {
@@ -112,9 +132,13 @@ void loop() {
     }
 #endif
     if (ready && !sensor.run()) {
-        status("bsec3", sensor.status);
-        status("bme690", sensor.sensor.status);
+        reportBmeStatus("run");
         if (sensor.status < BSEC_OK || sensor.sensor.status < BME69X_OK) ready = false;
+    }
+    static uint32_t lastDiagnosticMs = 0;
+    if (millis() - lastBmeOutputMs >= 10000 && millis() - lastDiagnosticMs >= 10000) {
+        lastDiagnosticMs = millis();
+        reportBmeStatus(ready ? "waiting_for_outputs" : "disabled_after_error");
     }
     delay(10);
 }

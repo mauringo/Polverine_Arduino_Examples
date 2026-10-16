@@ -59,3 +59,5 @@ The four defines at the top of the `.ino` replace PlatformIO build flags. Board 
 This is Mauro Riboni's personal hobby work, made for fun and learning, based on Bosch's BME68x/BSEC2 libraries and BlackIoT's Polverine demo. It is unofficial and is not endorsed or supported by Bosch. Original licenses are retained.
 
 Verified with the Arduino IDE bundled CLI and Espressif ESP32 core **3.3.11**, using the board options above. The `.ino` compiles and links both local Bosch libraries successfully. No firmware was uploaded.
+
+BME output fix: the sketch uses the verified BME690 IAQ output list, without the breath-VOC request rejected by this profile. Startup and periodic JSON diagnostics show the stage, actual BSEC/BME status codes, and callback count. The matching PlatformIO firmware has been verified on the connected board to produce BME and BMV readings.

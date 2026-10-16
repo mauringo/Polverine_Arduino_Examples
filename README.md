@@ -46,7 +46,7 @@ For every BME690 sample, the selected polynomial computes a heat-source offset f
 
 **Reference inconsistency corrected:** `POLVERINE_DEMO/include/polverine_cfg.h` declares a 30-second BMV080 cycle, while `src/bmv080_main.c` hardcodes 60 seconds. This example uses the declared **30 seconds consistently** for both the sensor and table selection. It preserves the reference's first-match boundary behavior and zero offset outside table ranges. The BSEC-only environment does not apply the BMV080-dependent board table; neither does a run where BMV080 initialization fails.
 
-The example emits readings as they arrive. It does not reproduce the reference's output gating, moving averages, ESP-IDF low-power setup, or Wi-Fi/BLE workloads. Their thermal effects can differ; the copied compensation tables still need validation on your running hardware. CO2/VOC fields are BSEC equivalents, not direct gas concentration measurements.
+The example emits readings as they arrive. It does not reproduce the reference's output gating, moving averages, ESP-IDF low-power setup, or Wi-Fi/BLE workloads. Their thermal effects can differ; the copied compensation tables still need validation on your running hardware. CO2 equivalent is a BSEC estimate, not a direct CO2 measurement. The BME690 IAQ profile rejects breath-VOC equivalent output (BSEC error -35), so that output is not requested.
 
 ## Maintain and release
 
@@ -116,4 +116,8 @@ Open this project folder in VS Code and enable the installed PlatformIO IDE exte
 
 For your own wiring/board, start with each library's `examples/generic_i2c/generic_i2c.ino` rather than the Polverine-specific application. Both sketches explain board-default SDA/SCL pins, custom ESP32 GPIOs, the difference between pin numbers and I2C addresses, and measurement setup. Their READMEs distinguish raw-driver portability from BSEC's required platform-specific algorithm archive and RAM.
 
-Prepared releases: BME690 **1.4.1**, BSEC3 **1.13.0**. The generic raw sketch compiles on Arduino Uno and ESP32-S3; the generic BSEC sketch compiles on ESP32, S2, S3 and C3. Physical measurements remain unvalidated. Publish the libraries through `./publish.sh libraries`, then the main project, to update its pinned revisions.
+Prepared releases: BME690 **1.4.1**, BSEC3 **1.13.1**. The generic raw sketch compiles on Arduino Uno and ESP32-S3; the generic BSEC sketch compiles on ESP32, S2, S3 and C3. Physical measurements remain unvalidated. Publish the libraries through `./publish.sh libraries`, then the main project, to update its pinned revisions.
+
+If no BME690 records appear, watch the JSON status records. `stage` identifies `begin`, `set_config`, `subscription`, `run`, or a periodic wait/error diagnostic. `bsec_status` and `sensor_status` are the actual error codes; `output_count` counts received BSEC packets. Forced-mode samples are now collected after measurement plus heater time, and pressure stays in Pa.
+
+Hardware verification of the BME-output fix: the connected Polverine accepted initialization, the 3.3 V / 3-second / 4-day profile and the corrected output subscription with status 0. Eight BME JSON packets and one BMV packet were captured in a 22-second observation. This confirms live output, not long-term calibration. The old breath-VOC subscription returned `BSEC_E_CONFIG_FEATUREMISMATCH` (-35) and prevented all BME callbacks; it has been removed.

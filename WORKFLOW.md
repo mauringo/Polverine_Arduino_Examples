@@ -37,7 +37,7 @@ GitHub releases contain source only. Bosch SDK binaries, ZIPs, generated Arduino
 
 ## First Library Manager submission: exact steps
 
-1. Run `./publish.sh libraries`. Commit the new example links and answer **yes** when asked to publish each Arduino version tag. Current prepared versions are BME690 `1.4.1` and BSEC3 `1.13.0`; keep `library.properties` and `library.json` aligned.
+1. Run `./publish.sh libraries`. Commit the new example links and answer **yes** when asked to publish each Arduino version tag. Current prepared versions are BME690 `1.4.1` and BSEC3 `1.13.1`; keep `library.properties` and `library.json` aligned.
 2. Run `./publish.sh main` to publish the examples project and the updated dependency references.
 3. Fork `https://github.com/arduino/library-registry` and create a submission branch.
 4. Edit `repositories.txt` in that fork. Add these two repository URLs on separate lines, leaving other entries unchanged:
