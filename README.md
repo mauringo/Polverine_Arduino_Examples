@@ -30,13 +30,13 @@ Example output (illustrative):
 
 ## How the demo is configured
 
-The reference is BlackIoT's **POLVERINE_DEMO**, pinned to commit `e75cb7adce5f9aa2b92c1f5565591db9b1cd24f1`.
+The reference is BlackIoT's **POLVERINE_FULL_MQTT_DEMO**, pinned to commit `e75cb7adce5f9aa2b92c1f5565591db9b1cd24f1`.
 
 | Setting | This example |
 | --- | --- |
 | BSEC profile | `bme690_iaq_33v_3s_4d`: 3.3 V, LP/3 seconds, 4-day history |
-| BMV080 mode | Duty cycling, 30 seconds, mode 0 |
-| Board compensation | Client/profile 1 + 30 seconds → BlackIoT table `tocp_cfg3` |
+| BMV080 mode | Duty cycling, 60 seconds, mode 0 |
+| Board compensation | Client/profile 0 + 60 seconds → BlackIoT Wi-Fi table `tocp_cfg2` |
 | Main temperature/humidity fields | Compensated by BSEC using the board table |
 | Raw fields | Explicitly named `raw_temperature_c` and `raw_humidity_pct` |
 
@@ -44,7 +44,7 @@ Read `src/main.cpp` for the setup and JSON output. Pins and board choices are na
 
 For every BME690 sample, the selected polynomial computes a heat-source offset from the **current raw temperature**. The library sends that offset to BSEC before processing the sample. BSEC then returns compensated temperature and humidity. It is not a manual subtraction after the reading.
 
-**Reference inconsistency corrected:** `POLVERINE_DEMO/include/polverine_cfg.h` declares a 30-second BMV080 cycle, while `src/bmv080_main.c` hardcodes 60 seconds. This example uses the declared **30 seconds consistently** for both the sensor and table selection. It preserves the reference's first-match boundary behavior and zero offset outside table ranges. The BSEC-only environment does not apply the BMV080-dependent board table; neither does a run where BMV080 initialization fails.
+The sensor cycle and compensation selector both use the Wi-Fi/MQTT demo's **60 seconds** and **client/profile 0**. It preserves the reference's first-match boundary behavior and zero offset outside table ranges. The BSEC-only environment does not apply the BMV080-dependent board table; neither does a run where BMV080 initialization fails. Selecting the Wi-Fi table does not enable networking; the example continues printing Serial JSON.
 
 The example emits readings as they arrive. It does not reproduce the reference's output gating, moving averages, ESP-IDF low-power setup, or Wi-Fi/BLE workloads. Their thermal effects can differ; the copied compensation tables still need validation on your running hardware. CO2 equivalent is a BSEC estimate, not a direct CO2 measurement. The BME690 IAQ profile rejects breath-VOC equivalent output (BSEC error -35), so that output is not requested.
 
@@ -121,3 +121,5 @@ Prepared releases: BME690 **1.4.1**, BSEC3 **1.13.1**. The generic raw sketch co
 If no BME690 records appear, watch the JSON status records. `stage` identifies `begin`, `set_config`, `subscription`, `run`, or a periodic wait/error diagnostic. `bsec_status` and `sensor_status` are the actual error codes; `output_count` counts received BSEC packets. Forced-mode samples are now collected after measurement plus heater time, and pressure stays in Pa.
 
 Hardware verification of the BME-output fix: the connected Polverine accepted initialization, the 3.3 V / 3-second / 4-day profile and the corrected output subscription with status 0. Eight BME JSON packets and one BMV packet were captured in a 22-second observation. This confirms live output, not long-term calibration. The old breath-VOC subscription returned `BSEC_E_CONFIG_FEATUREMISMATCH` (-35) and prevented all BME callbacks; it has been removed.
+
+The selected compensation table adjusts BSEC's reported temperature and humidity; it does not cool the hardware. At a raw 40 °C, this Wi-Fi/60-second table supplies a 5.902 °C heat-source offset (the previous USB/30-second table supplied 9.874 °C). Switching tables can therefore increase the reported temperature. Actual thermal behavior should be checked after the board stabilizes.

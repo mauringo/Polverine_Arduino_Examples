@@ -81,7 +81,7 @@ void setup() {
     Serial.begin(115200);
     const uint32_t start = millis();
     while (!Serial && millis() - start < 3000) delay(10);
-    // 1. Start the board buses and BMV080 with the reference 30-second cycle.
+    // 1. Start the board buses and BMV080 with the Wi-Fi demo's 60-second cycle.
     Wire.begin(BME690_SDA, BME690_SCL, 100000);
 #ifdef USE_BMV080
     pmReady = particulate.begin(SPI, BMV080_CS, 1000000, BMV080_SCK, BMV080_MISO, BMV080_MOSI);

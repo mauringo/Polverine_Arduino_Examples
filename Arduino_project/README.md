@@ -47,12 +47,12 @@ If the upload port does not appear: hold BOOT, press/release RESET, release BOOT
 
 ## What the sketch does
 
-1. Starts BMV080 through the 7Semi library with a **30-second duty cycle**.
+1. Starts BMV080 through the 7Semi library with a **60-second duty cycle**.
 2. Applies BME690's **3.3 V / 3-second / 4-day** BSEC IAQ profile.
-3. Uses BlackIoT's **client/profile 1 + 30-second** temperature compensation table before BSEC processes each reading.
+3. Uses BlackIoT's **Wi-Fi client/profile 0 + 60-second** temperature compensation table before BSEC processes each reading.
 4. Prints one JSON object per line. `temperature_c` and `humidity_pct` are compensated; fields starting with `raw_` are the original sensor readings.
 
-The BMV080 cycle and compensation selector deliberately both use 30 seconds, correcting the reference demo's declared-30/hardcoded-60 discrepancy. Hardware calibration still needs validation.
+The BMV080 cycle and compensation selector both match BlackIoT's POLVERINE_FULL_MQTT_DEMO: 60 seconds and client/profile 0 (table cfg2). The sketch remains a Serial JSON example; Wi-Fi is not started. Hardware calibration still needs validation.
 
 The four defines at the top of the `.ino` replace PlatformIO build flags. Board pins and settings are in `polverine_settings.h`. The compensation calculation and original BlackIoT tables are in the adjacent headers, with their MIT license.
 
