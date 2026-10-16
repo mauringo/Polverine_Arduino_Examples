@@ -5,7 +5,7 @@
   },
   "BSEC3_unofficial": {
     "url": "https://github.com/mauringo/Bsec3-ArduinoLibrary-Unofficial.git",
-    "revision": "831f5a1335b6ae0552bc335e9602d38834eafd2d"
+    "revision": "145c6a4320412b91ee2658e4e7deca5bfd714082"
   },
   "7Semi_BMV080": {
     "url": "https://github.com/7semi-solutions/7Semi-BMV080-Particulate-Matter-Sensor.git",
