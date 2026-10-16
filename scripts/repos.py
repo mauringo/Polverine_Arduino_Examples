@@ -66,7 +66,13 @@ for name in (REPOS if a.target == 'all' else [a.target]):
         if not a.message: p.error('commit requires -m MESSAGE')
         git(repo, 'add', '--all')
         audit(repo)
-        git(repo, 'commit', '-m', a.message)
+        pending = subprocess.run(['git', '-C', str(repo), 'diff', '--cached', '--quiet'])
+        if pending.returncode == 0:
+            print('No staged source changes to commit.')
+        elif pending.returncode == 1:
+            git(repo, 'commit', '-m', a.message)
+        else:
+            raise SystemExit('Could not inspect staged changes; commit aborted')
     elif a.action == 'push':
         audit(repo, history=True)
         # Push only the current branch; never tags or every local branch.

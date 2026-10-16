@@ -34,3 +34,26 @@ The `.ino` and PlatformIO example are separate application files. When changing 
 Pushing source and a version tag to each GitHub repository is separate from inclusion in Arduino Library Manager. For first-time registration, submit **each library URL separately** to the [Arduino library registry](https://github.com/arduino/library-registry#adding-a-library-to-library-manager). After acceptance, Arduino indexes eligible tagged versions. This script does not submit registry pull requests or claim registration has completed.
 
 GitHub releases contain source only. Bosch SDK binaries, ZIPs, generated Arduino library copies, and compiled firmware are excluded from all repository pushes.
+
+## First Library Manager submission: exact steps
+
+1. Run `./publish.sh libraries`. Commit the new example links and answer **yes** when asked to publish each Arduino version tag. Current prepared versions are BME690 `1.4.1` and BSEC3 `1.13.0`; keep `library.properties` and `library.json` aligned.
+2. Run `./publish.sh main` to publish the examples project and the updated dependency references.
+3. Fork `https://github.com/arduino/library-registry` and create a submission branch.
+4. Edit `repositories.txt` in that fork. Add these two repository URLs on separate lines, leaving other entries unchanged:
+
+```text
+https://github.com/mauringo/BME690-Arduino-lib-unofficial
+https://github.com/mauringo/Bsec3-ArduinoLibrary-Unofficial
+```
+
+5. Open a pull request from that branch to `arduino/library-registry:main`. Both libraries can be submitted in the same PR, as separate registry entries. Do not submit `Polverine_Arduino_Examples` as a library.
+6. Follow the bot's checks and resolve any reported errors. After acceptance, search Arduino Library Manager for `BME690_unofficial` and `BSEC3_unofficial`.
+
+For later releases: increase the version in both metadata files, commit, push, and publish a new version tag. No new registration PR is needed. Refer to [Arduino's current registration instructions](https://github.com/arduino/library-registry#adding-a-library-to-library-manager) and [release requirements](https://github.com/arduino/library-registry/blob/main/FAQ.md#update-requirements).
+
+The library source packages exclude Bosch binaries and ZIPs. BSEC3 users must still download the SDK separately and follow its installation instructions, even after installing the wrapper through Library Manager. Registration is subject to Arduino's validation; a successful GitHub push alone does not complete it.
+
+## Commit without publishing
+
+Run `./publish.sh main --commit-only` for the main project or `./publish.sh libraries --commit-only` for both libraries. The script stages the selected repositories' source changes, accepts a message (Enter uses the suggested message), then commits locally without requiring a remote or authentication. A clean repository reports that it already has no uncommitted source changes. Library pushes update `libraries.json` in the main project; commit/publish the main project separately afterward.

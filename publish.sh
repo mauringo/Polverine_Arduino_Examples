@@ -17,7 +17,7 @@ done
 
 usage() {
     cat <<'HELP'
-Usage: ./publish.sh [main|bme690|bsec3|libraries] [--check]
+Usage: ./publish.sh [main|bme690|bsec3|libraries] [--check|--commit-only]
 
 No arguments: choose main project or libraries, then which library.
 Works on macOS and Linux with Bash, Git and Python 3.
@@ -25,6 +25,7 @@ Works on macOS and Linux with Bash, Git and Python 3.
   main       Publish the PlatformIO + Arduino project to its own origin.
   example    Alias for main.
   --check    Show status and check for forbidden files without changing anything.
+  --commit-only  Stage and commit selected source changes, without pushing.
 
 Existing commits are pushed. If there are edits, you choose a commit message.
 ZIPs, Bosch binaries and generated Arduino libraries are excluded and audited.
@@ -33,16 +34,20 @@ HELP
 
 target=""
 check_only=false
+commit_only=false
 for argument in "$@"; do
     case "$argument" in
         --help|-h) usage; exit 0;;
         --check) check_only=true;;
+        --commit-only) commit_only=true;;
         main|example|bme690|bsec3|libraries)
             if [[ -n "$target" ]]; then usage; exit 2; fi
             target="$argument";;
         *) usage; exit 2;;
     esac
 done
+
+if "$check_only" && "$commit_only"; then usage; exit 2; fi
 
 if [[ -z "$target" ]]; then
     while true; do
@@ -97,19 +102,39 @@ if "$check_only"; then printf '\nChecks passed. Nothing changed or pushed.\n'; e
 
 for item in "${targets[@]}"; do
     repo="$(repo_for "$item")"
+    printf '\n--- Commit: %s ---\n' "$item"
+    if [[ -n "$(git -C "$repo" status --porcelain --untracked-files=all)" ]]; then
+        case "$item" in
+            example) default_message='Update Polverine Arduino examples';;
+            bme690) default_message='Update BME690_unofficial';;
+            bsec3) default_message='Update BSEC3_unofficial';;
+        esac
+        read -r -p "Commit message [$default_message]: " message
+        message="${message:-$default_message}"
+        if ! python3 scripts/repos.py commit "$item" -m "$message"; then
+            printf 'Commit failed for %s. Nothing will be pushed.\n' "$item" >&2
+            exit 1
+        fi
+        printf 'Committed changes in %s.\n' "$item"
+    else
+        printf 'No uncommitted source changes in %s; the existing commit is ready to push.\n' "$item"
+    fi
+    if git -C "$repo" rev-parse --verify HEAD >/dev/null 2>&1; then
+        git -C "$repo" --no-pager log -1 --oneline
+    fi
+done
+if "$commit_only"; then printf '\nCommit step complete. Nothing pushed.\n'; exit 0; fi
+
+# A commit does not require a remote or GitHub authentication.
+for item in "${targets[@]}"; do
+    repo="$(repo_for "$item")"
     if ! git -C "$repo" remote get-url origin >/dev/null 2>&1; then
         printf '\n%s has no origin. Create an empty GitHub repository first.\n' "$item"
-        read -r -p 'Paste its Git remote URL (blank cancels): ' remote_url
+        read -r -p 'Paste its Git remote URL (blank stops before pushing): ' remote_url
         [[ -n "$remote_url" ]] || exit 1
         git -C "$repo" remote add origin "$remote_url"
     fi
     printf '\n%s → %s\n' "$item" "$(git -C "$repo" remote get-url origin)"
-    if [[ -n "$(git -C "$repo" status --porcelain --untracked-files=all)" ]]; then
-        read -r -p "Commit message for $item (blank cancels): " message
-        [[ -n "$message" ]] || exit 1
-        python3 scripts/repos.py commit "$item" -m "$message"
-    fi
-    git -C "$repo" --no-pager log -1 --oneline
 done
 
 read -r -p 'Push the selected repositories to the origins shown above? [y/N] ' answer
@@ -128,3 +153,7 @@ for item in "${targets[@]}"; do
     fi
 done
 printf '\nPublished successfully. ZIPs and Bosch binaries were excluded.\n'
+if [[ "$target" != example && -n "$(git -C "$ROOT" status --porcelain --untracked-files=all)" ]]; then
+    printf 'The main project has uncommitted changes (including updated library references).\n'
+    printf 'Run ./publish.sh main to commit and publish the main project separately.\n'
+fi

@@ -57,12 +57,13 @@ Edit library source directly under `lib/`, test it with this project, then relea
 ```sh
 ./publish.sh            # Choose main project or libraries, then which library
 ./publish.sh libraries  # Publish both libraries
-./publish.sh main       # Publish the PlatformIO + Arduino project
+./publish.sh main       # Commit and publish the PlatformIO + Arduino project
+./publish.sh main --commit-only  # Commit locally without pushing
 ```
 
 Requires Bash (macOS’s built-in Bash 3.2 is supported), Git, and Python 3 on PATH. Run from a normal shell or VS Code’s terminal; no macOS-specific paths or GitHub CLI are required.
 
-The script shows repository status and destinations, audits forbidden files, commits pending edits with your message, and asks before pushing. It inherits Git authentication from your terminal; VS Code being signed in must also provide Git access to your repositories. If needed, complete VS Code's GitHub authentication prompt. After each successful library push, the project pins that published commit. The script also offers to publish an Arduino version tag, independently for each library. The main project publishes to `https://github.com/mauringo/Polverine_Arduino_Examples.git`.
+The script shows repository status and destinations, audits forbidden files, stages all changes in the selected repository and commits them before asking to push. Enter a commit message or press Enter for the suggested message. If that repository is already clean, it explicitly says the existing commit is ready to push. Main-project changes and library changes are committed separately. It inherits Git authentication from your terminal; VS Code being signed in must also provide Git access to your repositories. If needed, complete VS Code's GitHub authentication prompt. After each successful library push, the project pins that published commit. The script also offers to publish an Arduino version tag, independently for each library. The main project publishes to `https://github.com/mauringo/Polverine_Arduino_Examples.git`.
 
 For a read-only check: `./publish.sh libraries --check`. A failed push leaves local commits intact and can be retried.
 
@@ -84,7 +85,7 @@ The root project and your two libraries each have their own Git history and orig
 | `lib/BSEC3_unofficial` | Separate Git clone of your BSEC3 library |
 | `lib/7Semi_BMV080` | Local 7Semi dependency downloaded by bootstrap; not published with this project |
 
-All three libraries live locally under `lib/` as editable source. Edit their `.h`, `.cpp`, and `.c` files directly; PlatformIO builds those sources in place. The entire `lib/` folder and generated Arduino library copies are excluded from the root project. The project contains only application code, board compensation tables, setup scripts, and dependency references. `libraries.json` records dependency URLs and starting commits. Bootstrap only downloads missing libraries and never overwrites existing source edits. It does not apply transformations or modify your source. **Publish both updated libraries before publishing the main project**, so its pinned commits are available to fresh clones. Publishing is currently pending local GitHub authentication. The GitHub repository names remain unchanged; install/clone them under the folder names above for Arduino IDE use.
+All three libraries live locally under `lib/` as editable source. Edit their `.h`, `.cpp`, and `.c` files directly; PlatformIO builds those sources in place. The entire `lib/` folder and generated Arduino library copies are excluded from the root project. The project contains only application code, board compensation tables, setup scripts, and dependency references. `libraries.json` records dependency URLs and starting commits. Bootstrap only downloads missing libraries and never overwrites existing source edits. It does not apply transformations or modify your source. **Publish both updated libraries before publishing the main project**, so its pinned commits are available to fresh clones. The GitHub repository names remain unchanged; install/clone them under the folder names above for Arduino IDE use.
 
 ```sh
 python3 scripts/repos.py status
@@ -110,3 +111,9 @@ Sources: [BME690](https://github.com/mauringo/BME690-Arduino-lib-unofficial), [B
 ## VS Code controls
 
 Open this project folder in VS Code and enable the installed PlatformIO IDE extension. Run **Developer: Reload Window** from the Command Palette if its toolbar has not appeared. The status bar provides labeled Build, Upload, Serial, and Debug controls. Upload uses `polverine-full`; Debug uses `polverine-debug` and stops at `setup()` through the ESP32-S3 built-in USB JTAG interface. The same commands are available under Terminal → Run Task. Debug is also available through Run and Debug → Polverine USB JTAG → F5. Debugging has been compiled but not tested on attached hardware.
+
+## Generic library examples
+
+For your own wiring/board, start with each library's `examples/generic_i2c/generic_i2c.ino` rather than the Polverine-specific application. Both sketches explain board-default SDA/SCL pins, custom ESP32 GPIOs, the difference between pin numbers and I2C addresses, and measurement setup. Their READMEs distinguish raw-driver portability from BSEC's required platform-specific algorithm archive and RAM.
+
+Prepared releases: BME690 **1.4.1**, BSEC3 **1.13.0**. The generic raw sketch compiles on Arduino Uno and ESP32-S3; the generic BSEC sketch compiles on ESP32, S2, S3 and C3. Physical measurements remain unvalidated. Publish the libraries through `./publish.sh libraries`, then the main project, to update its pinned revisions.
