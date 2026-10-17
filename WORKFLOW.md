@@ -1,6 +1,6 @@
 # Maintain here, publish the libraries separately
 
-Normal users follow the [Arduino guide](Arduino_project/README.md) or the release-based PlatformIO setup in [README.md](README.md). Library Manager now includes both unofficial libraries at **0.0.1**. No registry submission is needed again for future versions.
+Normal users follow the [Arduino guide](Arduino_project/README.md) or the [PlatformIO usage guide](docs/PLATFORMIO.md). The PlatformIO guide explains everyday controls, why it fits library maintenance, and how release/development environments differ. Library Manager now includes both unofficial libraries at **0.0.1**. No registry submission is needed again for future versions.
 
 ## Three independent repositories
 

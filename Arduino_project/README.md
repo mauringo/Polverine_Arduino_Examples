@@ -2,6 +2,8 @@
 
 This guide takes a fresh checkout through a basic BME690 check and the combined **Serial JSON** example on BlackIoT's Polverine ESP32-S3 board. No PlatformIO installation or library source clone is needed for Arduino IDE.
 
+If you prefer VS Code or want to maintain the libraries alongside the example, follow the **[PlatformIO usage guide](../docs/PLATFORMIO.md)**. It covers the same Arduino framework application and explains the practical differences between the two workflows.
+
 This is **Mauro Riboni's personal hobby work, made for fun and learning**, based on Bosch Sensortec's BME68x/BSEC2 Arduino libraries and BlackIoT's Polverine reference. It is unofficial and is not endorsed or supported by Bosch or BlackIoT. The BMV080 Arduino wrapper is maintained by 7Semi. Retained source licenses and separately obtained Bosch SDK terms apply.
 
 ## 1. Get the example repository

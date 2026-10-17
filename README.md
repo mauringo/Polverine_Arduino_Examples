@@ -23,6 +23,8 @@ Both unofficial libraries are present in [Arduino's live library index](https://
 
 ## Start with PlatformIO / VS Code
 
+**Recommended for maintaining this project and its libraries.** Follow the **[step-by-step PlatformIO usage guide](docs/PLATFORMIO.md)** for installation, Build/Upload/Monitor controls, source files, build environments and troubleshooting. It also explains [why PlatformIO fits this project](docs/PLATFORMIO.md#why-use-platformio-for-this-project) compared with Arduino IDE. The firmware still uses the Arduino framework; PlatformIO records the build configuration and manages dependencies around it.
+
 Install PlatformIO IDE, Git and Python 3. Clone the project and open its root folder in VS Code:
 
 ```sh
@@ -52,7 +54,7 @@ python3 scripts/setup_platformio.py -e polverine-bsec3 -e polverine-debug --bsec
 pio run -e polverine-bsec3
 ```
 
-VS Code's PlatformIO status bar / Project Tasks provides Build, Upload and Monitor. If missing, enable the PlatformIO IDE extension, open this folder containing `platformio.ini`, and run **Developer: Reload Window**. The included Terminal → Run Task entries also build/upload/monitor; Run and Debug → **Polverine USB JTAG** starts debugging. Close Serial Monitor before uploading or starting a different monitor. JTAG debugging has not been verified on hardware.
+VS Code's PlatformIO status bar / Project Tasks provides Build, Upload and Monitor. If missing, enable the PlatformIO IDE extension, open this folder containing `platformio.ini`, and run **Developer: Reload Window**. The included Terminal → Run Task entries also build/upload/monitor. See the [debug environment instructions](docs/PLATFORMIO.md#6-choose-a-build-environment) before starting a debugger. Close Serial Monitor before uploading or starting a different monitor. JTAG debugging has not been verified on hardware.
 
 ## BMV080, BME690 and BSEC3 configuration
 
