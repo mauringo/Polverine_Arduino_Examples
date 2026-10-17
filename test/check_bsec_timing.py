@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-source = (root / 'lib/BSEC3_unofficial/src/bsec3.cpp').read_text()
+source = (root / 'lib/Bsec3-ArduinoLibrary-Unofficial/src/bsec3.cpp').read_text()
 start = source.index('bool Bsec3::run(void)')
 end = source.index('\n/**', source.index('bool Bsec3::processFetchedData', start))
 methods = source[start:end]

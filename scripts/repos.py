@@ -7,7 +7,7 @@ import subprocess
 import re
 
 ROOT = Path(__file__).resolve().parents[1]
-REPOS = {'example': ROOT, 'bme690': ROOT / 'lib/BME690_unofficial', 'bsec3': ROOT / 'lib/BSEC3_unofficial'}
+REPOS = {'example': ROOT, 'bme690': ROOT / 'lib/BME690-Arduino-lib-unofficial', 'bsec3': ROOT / 'lib/Bsec3-ArduinoLibrary-Unofficial'}
 BLOCKED = {'.zip', '.a', '.lib', '.bin', '.elf', '.o', '.so', '.dll', '.dylib'}
 
 def git(repo, *args, capture=False):
@@ -21,7 +21,7 @@ def audit(repo, history=False):
         files += [line.partition(' ')[2] for line in git(repo, 'rev-list', '--objects', 'HEAD', capture=True).splitlines()]
     bad = [f for f in files if f and Path(f).suffix.lower() in BLOCKED]
     if repo == ROOT:
-        bad += [f for f in files if f.startswith(('lib/', 'Arduino_project/libraries/'))]
+        bad += [f for f in files if f.startswith(('lib/', 'Arduino_project/libraries/', 'hardware/Polverine/'))]
     if bad:
         raise SystemExit('Refusing operation: prohibited files in index/history:\n' + '\n'.join(sorted(set(bad))))
 
@@ -94,5 +94,5 @@ for name in (REPOS if a.target == 'all' else [a.target]):
         else:
             git(repo, 'tag', '-a', tag, '-m', f'{repo.name} {tag}')
         git(repo, 'push', 'origin', 'refs/tags/' + tag)
-        print(f'Published Arduino release {tag}. Library Manager registration is a separate one-time step.')
+        print(f'Published Arduino release {tag}. The registry will index eligible tags for this registered library.')
     elif a.action == 'audit': audit(repo, history=True)

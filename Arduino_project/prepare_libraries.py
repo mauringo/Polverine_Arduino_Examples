@@ -6,26 +6,26 @@ import shutil
 sketch = Path(__file__).resolve().parent
 root = sketch.parent
 output = sketch / 'libraries'
-required = [root / 'lib/BSEC3_unofficial/src/esp32s3/libalgobsec.a',
-            root / 'lib/BSEC3_unofficial/src/config/bme690',
+required = [root / 'lib/Bsec3-ArduinoLibrary-Unofficial/src/esp32s3/libalgobsec.a',
+            root / 'lib/Bsec3-ArduinoLibrary-Unofficial/src/config/bme690',
             *[root / 'private/bmv080' / n for n in
               ('bmv080.h', 'bmv080_defs.h', 'lib_bmv080.a', 'lib_postProcessor.a')]]
 for source in required:
     if not source.exists():
         raise SystemExit(f'Missing {source}. Run both SDK installers first; see README.md.')
-for name in ('BME690_unofficial', 'BSEC3_unofficial', '7Semi_BMV080'):
+for name in ('BME690-Arduino-lib-unofficial', 'Bsec3-ArduinoLibrary-Unofficial', 'Polverine_BMV080_Arduino'):
     dest = output / name
     if dest.exists():
         raise SystemExit(f'{dest} already exists. Move/remove that generated folder before regenerating.')
 output.mkdir(exist_ok=True)
-for name in ('BME690_unofficial', 'BSEC3_unofficial', '7Semi_BMV080'):
+for name in ('BME690-Arduino-lib-unofficial', 'Bsec3-ArduinoLibrary-Unofficial', 'Polverine_BMV080_Arduino'):
     shutil.copytree(root / 'lib' / name, output / name,
                     ignore=shutil.ignore_patterns('.git', '*.a', '*.zip', '.pio', '__pycache__'))
 # Arduino mixed-source libraries select ESP32-S3 archives under src/esp32s3.
-bsec = output / 'BSEC3_unofficial'
+bsec = output / 'Bsec3-ArduinoLibrary-Unofficial'
 (bsec / 'src/esp32s3').mkdir(parents=True, exist_ok=True)
 shutil.copy2(required[0], bsec / 'src/esp32s3/libalgobsec.a')
-bmv = output / '7Semi_BMV080'
+bmv = output / 'Polverine_BMV080_Arduino'
 (bmv / 'src/esp32s3').mkdir(parents=True, exist_ok=True)
 for name in ('bmv080.h', 'bmv080_defs.h'):
     shutil.copy2(root / 'private/bmv080' / name, bmv / 'src' / name)

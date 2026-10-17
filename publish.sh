@@ -21,7 +21,7 @@ Usage: ./publish.sh [main|bme690|bsec3|libraries] [--check|--commit-only]
 
 No arguments: choose main project or libraries, then which library.
 Works on macOS and Linux with Bash, Git and Python 3.
-  libraries  Publish both BME690_unofficial and BSEC3_unofficial.
+  libraries  Publish both BME690-Arduino-lib-unofficial and Bsec3-ArduinoLibrary-Unofficial.
   main       Publish the PlatformIO + Arduino project to its own origin.
   example    Alias for main.
   --check    Show status and check for forbidden files without changing anything.
@@ -62,7 +62,7 @@ if [[ -z "$target" ]]; then
     done
     if [[ "$target" == libraries ]]; then
         while true; do
-            printf '\nWhich libraries?\n  1) BME690_unofficial\n  2) BSEC3_unofficial\n  3) Both libraries\n  0) Cancel\n'
+            printf '\nWhich libraries?\n  1) BME690-Arduino-lib-unofficial\n  2) Bsec3-ArduinoLibrary-Unofficial\n  3) Both libraries\n  0) Cancel\n'
             read -r -p 'Choice [0-3]: ' choice
             case "$choice" in
                 1) target=bme690; break;;
@@ -84,8 +84,8 @@ esac
 
 repo_for() {
     case "$1" in
-        bme690) printf '%s/lib/BME690_unofficial' "$ROOT";;
-        bsec3) printf '%s/lib/BSEC3_unofficial' "$ROOT";;
+        bme690) printf '%s/lib/BME690-Arduino-lib-unofficial' "$ROOT";;
+        bsec3) printf '%s/lib/Bsec3-ArduinoLibrary-Unofficial' "$ROOT";;
         example) printf '%s' "$ROOT";;
     esac
 }
@@ -106,8 +106,8 @@ for item in "${targets[@]}"; do
     if [[ -n "$(git -C "$repo" status --porcelain --untracked-files=all)" ]]; then
         case "$item" in
             example) default_message='Update Polverine Arduino examples';;
-            bme690) default_message='Update BME690_unofficial';;
-            bsec3) default_message='Update BSEC3_unofficial';;
+            bme690) default_message='Update BME690-Arduino-lib-unofficial';;
+            bsec3) default_message='Update Bsec3-ArduinoLibrary-Unofficial';;
         esac
         read -r -p "Commit message [$default_message]: " message
         message="${message:-$default_message}"

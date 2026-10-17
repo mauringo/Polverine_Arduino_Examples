@@ -1,13 +1,13 @@
 {
-  "BME690_unofficial": {
+  "BME690-Arduino-lib-unofficial": {
     "url": "https://github.com/mauringo/BME690-Arduino-lib-unofficial.git",
-    "revision": "1d9df7a078da95a76c0a23a21ed5e378a5578a4c"
+    "revision": "0497c99fcac528830a461a9bba98a0867f6d8278"
   },
-  "BSEC3_unofficial": {
+  "Bsec3-ArduinoLibrary-Unofficial": {
     "url": "https://github.com/mauringo/Bsec3-ArduinoLibrary-Unofficial.git",
-    "revision": "145c6a4320412b91ee2658e4e7deca5bfd714082"
+    "revision": "d1b211192bbbc935d7b9ef9e8e265019ee645fe2"
   },
-  "7Semi_BMV080": {
+  "Polverine_BMV080_Arduino": {
     "url": "https://github.com/7semi-solutions/7Semi-BMV080-Particulate-Matter-Sensor.git",
     "revision": "58ada37a6d78a57a8ffeeff8b5752eb36313b67a"
   }

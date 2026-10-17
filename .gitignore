@@ -14,3 +14,5 @@ lib/
 private/
 .vscode/c_cpp_properties.json
 Arduino_project/libraries/
+# Optional sparse clone of BlackIoT CAD files; never bundle its ZIP/model here.
+hardware/Polverine/

@@ -1,127 +1,115 @@
-# Polverine Arduino JSON example
+# Polverine Arduino & PlatformIO: Bosch Sensortec BMV080, BME690 and BSEC3
 
-Maintained by **Mauro Riboni** ([@mauringo](https://github.com/mauringo)).
+Read **BMV080 particulate matter (PM1, PM2.5, PM10)** and **BME690 temperature, humidity, pressure, gas resistance and BSEC3 indoor air quality** on the [BlackIoT Polverine ESP32-S3 board](https://blackiot.swiss/products/polverine.html). This Arduino framework example prints one JSON object per line over USB Serial at **115200 baud**.
 
-**Personal hobby work, made privately for fun and learning.** The unofficial BME690 library started from Bosch's official BME68x Arduino library; the unofficial BSEC3 wrapper started from Bosch's official BSEC2 Arduino library. This work is independent of Bosch Sensortec and is not endorsed, certified, or supported by Bosch. Original Bosch copyright notices and licenses are retained. These experimental projects carry no promise of reliability, continued maintenance, or support.
+Maintained by **Mauro Riboni** ([@mauringo](https://github.com/mauringo)). **My personal hobby work, made privately for fun and learning.** My BME690 library started from Bosch Sensortec's BME68x Arduino library; my BSEC3 wrapper started from Bosch's BSEC2 Arduino library. This project is unofficial, independent of Bosch Sensortec and BlackIoT, and is not endorsed, certified or supported by them. Original notices and licenses are retained.
 
-For **Arduino IDE**, open `Arduino_project/Arduino_project.ino` and follow [its setup instructions](Arduino_project/README.md).
+## Start with Arduino IDE
 
-One `src/main.cpp` reads BME690 through BSEC3 and BMV080 through the 7Semi wrapper, and prints one JSON object per line at 115200 baud. The application emits JSON for startup/errors too. ESP32 bootloader messages may appear before the application starts. ArduinoJson serializes non-finite sensor values as `null`.
+Follow the **[step-by-step Arduino guide](Arduino_project/README.md)**: clone this repository, install the published libraries in Library Manager, install your locally obtained Bosch SDKs, select the ESP32-S3 board, try a basic BME690 example, then upload **[Arduino_project.ino](Arduino_project/Arduino_project.ino)**.
+
+**Library sources are installed separately.** You do not need to clone the library repositories or copy this workspace's development libraries into Arduino IDE.
+
+| Arduino Library Manager search name | Tested version | Role / source |
+| --- | --- | --- |
+| `BME690-Arduino-lib-unofficial` | 0.0.1 | [Mauro's raw BME690 driver](https://github.com/mauringo/BME690-Arduino-lib-unofficial) |
+| `Bsec3-ArduinoLibrary-Unofficial` | 0.0.1 | [Mauro's BSEC3 Arduino wrapper](https://github.com/mauringo/Bsec3-ArduinoLibrary-Unofficial) |
+| `7Semi BMV080` | 1.0.0 | [7Semi's Bosch BMV080 wrapper](https://github.com/7semi-solutions/7Semi-BMV080-Particulate-Matter-Sensor) |
+| `ArduinoJson` | 7.0.4 | [Serial JSON serialization](https://github.com/bblanchon/ArduinoJson) |
+
+Both unofficial libraries are present in [Arduino's live library index](https://downloads.arduino.cc/libraries/library_index.json.gz) as version **0.0.1**. The public BME690 and BSEC3 `v0.0.1` tags match the commits recorded in `libraries.json`. The 7Semi Library Manager release is **1.0.0**; a previous local development copy called `Polverine_BMV080_Arduino` is not the package to install.
+
+**Library Manager installs the wrappers, not Bosch's proprietary algorithm binaries.** Obtain **BSEC 3.3.0.1 IAQ** and **BMV080 SDK 11.2.0** from Bosch under their terms, then run the appropriate setup helper below or in the Arduino guide. This repository does not distribute SDK ZIPs, proprietary archives, generated Bosch profiles, firmware, or library sources.
+
+## Start with PlatformIO / VS Code
+
+Install PlatformIO IDE, Git and Python 3. Clone the project and open its root folder in VS Code:
 
 ```sh
-python3 scripts/repos.py bootstrap
-python3 scripts/install_bsec.py bsec_v3-3-0-1.zip
-python3 scripts/install_bmv080.py bmv080-sdk-v11-2-0.zip
-pio run
-pio run -t upload
+git clone https://github.com/mauringo/Polverine_Arduino_Examples.git
+cd Polverine_Arduino_Examples
+python3 scripts/setup_platformio.py --bsec-zip /path/to/bsec_v3-3-0-1.zip --bmv-zip /path/to/bmv080-sdk-v11-2-0.zip
+pio run -e polverine-full
+pio run -e polverine-full -t upload
 pio device monitor -b 115200
 ```
 
-On this Mac, use `~/.platformio/penv/bin/pio` if `pio` is not on PATH. The default `polverine-full` environment includes both sensors. `pio run -e polverine-bsec3` builds without BMV080. Raw BME690 examples are provided in its library's `examples/` folder.
+Replace `/path/to/` with your downloaded SDK locations; quote paths containing spaces. The helper works on macOS and Linux. It finds PlatformIO on PATH or in `~/.platformio/penv/bin/pio`. If your shell cannot find `pio`, use that full path for the remaining commands, or use VS Code's PlatformIO terminal.
 
-Example output (illustrative):
+The helper downloads the published Arduino releases first, then adds the SDK files locally. This order fixes **“BSEC3 archive missing for esp32s3”**. Re-run it after deleting `.pio/libdeps`, reinstalling packages, or changing library versions. No library bootstrap is needed for a normal build. PlatformIO uses the published BME690 tag required by BSEC3's metadata and Arduino's distributed ZIP packages for BSEC3 and 7Semi.
+
+| Environment | Purpose |
+| --- | --- |
+| `polverine-full` (default) | Both sensors, Serial JSON |
+| `polverine-bsec3` | BME690 + BSEC3 only; no BMV080 board heat table |
+| `polverine-debug` | Both sensors, built-in ESP32-S3 USB JTAG, stops at `setup()` |
+| `polverine-dev` | Opt-in build against editable nested library sources; see [WORKFLOW.md](WORKFLOW.md) |
+
+Each environment has its own downloaded packages. Prepare another environment before its first build, for example:
+
+```sh
+python3 scripts/setup_platformio.py -e polverine-bsec3 -e polverine-debug --bsec-zip /path/to/bsec_v3-3-0-1.zip --bmv-zip /path/to/bmv080-sdk-v11-2-0.zip
+pio run -e polverine-bsec3
+```
+
+VS Code's PlatformIO status bar / Project Tasks provides Build, Upload and Monitor. If missing, enable the PlatformIO IDE extension, open this folder containing `platformio.ini`, and run **Developer: Reload Window**. The included Terminal → Run Task entries also build/upload/monitor; Run and Debug → **Polverine USB JTAG** starts debugging. Close Serial Monitor before uploading or starting a different monitor. JTAG debugging has not been verified on hardware.
+
+## BMV080, BME690 and BSEC3 configuration
+
+The board configuration follows BlackIoT's [POLVERINE_FULL_MQTT_DEMO](https://github.com/BlackIoT/Polverine/tree/e75cb7adce5f9aa2b92c1f5565591db9b1cd24f1/POLVERINE_FULL_MQTT_DEMO). This application uses USB Serial; it does not start Wi-Fi or MQTT.
+
+| Setting | Value |
+| --- | --- |
+| BME690 I2C | SDA GPIO14, SCL GPIO21, 100 kHz, address `0x76` |
+| BMV080 SPI | SCK GPIO12, MISO GPIO13, MOSI GPIO11, CS GPIO10, 1 MHz |
+| BSEC3 IAQ profile | `bme690_iaq_33v_3s_4d`: 3.3 V sensor supply, 3-second sample period, 4-day history |
+| BMV080 operation | 60-second duty cycle, mode 0 |
+| Board heat compensation | Wi-Fi client/profile 0 + 60 seconds → BlackIoT `tocp_cfg2` |
+
+The 4-day setting is calibration history, not a startup delay. The sample period is 3 seconds; call `sensor.run()` frequently so the library can schedule measurements. IAQ accuracy evolves with conditioning and environmental variation. This example does not persist BSEC state; the library's `basic_config_state` example demonstrates persistence.
+
+Pins and choices are in [polverine_settings.h](include/polverine_settings.h); the Arduino sketch has matching headers alongside its `.ino`. The original six BlackIoT coefficient tables and their MIT license are retained. A callback calculates the offset from each raw temperature before BSEC processes the sample, allowing BSEC to compensate **both temperature and humidity**. The board table is applied only when the matching BMV080 mode starts successfully. The sketch does not reproduce the reference's averaging, output gating, ESP-IDF power management or networking workload.
+
+**Local calibration:** `TEMPERATURE_CALIBRATION_EXTRA_C` is currently **14.0 °C**, a provisional adjustment requested for the maintainer's board after an approximate 39 °C versus 25 °C room comparison. It is added to the original table without changing its coefficients. **For a new board, start with `0.0f` and calibrate against a reference thermometer after stabilization.** Positive values lower BSEC's reported temperature and also change humidity. This does not cool the board or establish accuracy across all temperatures or enclosures.
+
+## Serial JSON output
+
+Each application line is JSON, including initialization and error diagnostics. ESP32 ROM/boot messages can precede the application. Non-finite sensor values become `null`. Illustrative readings:
 
 ```json
-{"type":"bme690","time_ms":3000,"raw_temperature_c":32.7,"temperature_c":23.5,"pressure_pa":101325,"raw_humidity_pct":30,"humidity_pct":45,"gas_resistance_ohm":120000,"iaq":25,"iaq_accuracy":0,"stabilized":0,"run_in":0}
-{"type":"bmv080","time_ms":3200,"pm1_ug_m3":1.2,"pm2_5_ug_m3":1.4,"pm10_ug_m3":1.6,"obstructed":false,"out_of_range":false}
+{"type":"bme690","time_ms":3000,"raw_temperature_c":39.0,"temperature_c":25.0,"pressure_pa":101325,"raw_humidity_pct":30.0,"humidity_pct":50.0,"gas_resistance_ohm":120000,"iaq":25,"iaq_accuracy":0,"stabilized":0,"run_in":0}
+{"type":"bmv080","time_ms":60000,"cycle_seconds":60,"pm1_ug_m3":1.2,"pm2_5_ug_m3":1.4,"pm10_ug_m3":1.6,"obstructed":false,"out_of_range":false}
 ```
 
-`temperature_c` and `humidity_pct` are BSEC-compensated values. `raw_temperature_c` and `raw_humidity_pct` are the original sensor readings. IAQ needs conditioning/calibration. Respect BMV080 obstruction and range flags. The example does not persist BSEC state; the BSEC library's `basic_config_state` example shows how.
+`raw_` fields are physical sensor readings; `temperature_c` and `humidity_pct` are BSEC outputs. Pressure is in Pa, gas resistance in ohms, particulate mass concentration in µg/m³. CO2 equivalent is a BSEC estimate, not a direct CO2 measurement. Respect BMV080 obstruction/range flags. BMV080 output is less frequent because of duty cycling.
 
-## How the demo is configured
+If BME690 output is missing, inspect `stage`, `ready`, `bsec_status`, `sensor_status`, `data_status` and `output_count` in status JSON. The sketch repeats a diagnostic after 10 seconds without BME output. This IAQ profile rejects breath-VOC equivalent output with BSEC `-35`, so the sketch requests only supported outputs. The [Arduino troubleshooting guide](Arduino_project/README.md#9-troubleshooting) covers common setup errors.
 
-The reference is BlackIoT's **POLVERINE_FULL_MQTT_DEMO**, pinned to commit `e75cb7adce5f9aa2b92c1f5565591db9b1cd24f1`.
+## Polverine 3D models and printable covers
 
-| Setting | This example |
-| --- | --- |
-| BSEC profile | `bme690_iaq_33v_3s_4d`: 3.3 V, LP/3 seconds, 4-day history |
-| BMV080 mode | Duty cycling, 60 seconds, mode 0 |
-| Board compensation | Client/profile 0 + 60 seconds → BlackIoT Wi-Fi table `tocp_cfg2` |
-| Main temperature/humidity fields | Compensated by BSEC using the board table |
-| Raw fields | Explicitly named `raw_temperature_c` and `raw_humidity_pct` |
-
-Read `src/main.cpp` for the setup and JSON output. Pins and board choices are named in `include/polverine_settings.h`. The compensation calculation is in `include/polverine_compensation.h`; all six original coefficient tables are preserved in `include/polverine_temperature_tables.h`, with BlackIoT's MIT license alongside them.
-
-For every BME690 sample, the selected polynomial computes a heat-source offset from the **current raw temperature**. The library sends that offset to BSEC before processing the sample. BSEC then returns compensated temperature and humidity. It is not a manual subtraction after the reading.
-
-The sensor cycle and compensation selector both use the Wi-Fi/MQTT demo's **60 seconds** and **client/profile 0**. It preserves the reference's first-match boundary behavior and zero offset outside table ranges. The BSEC-only environment does not apply the BMV080-dependent board table; neither does a run where BMV080 initialization fails. Selecting the Wi-Fi table does not enable networking; the example continues printing Serial JSON.
-
-The example emits readings as they arrive. It does not reproduce the reference's output gating, moving averages, ESP-IDF low-power setup, or Wi-Fi/BLE workloads. Their thermal effects can differ; the copied compensation tables still need validation on your running hardware. CO2 equivalent is a BSEC estimate, not a direct CO2 measurement. The BME690 IAQ profile rejects breath-VOC equivalent output (BSEC error -35), so that output is not requested.
-
-## Maintain and release
-
-Edit library source directly under `lib/`, test it with this project, then release each library separately. See [WORKFLOW.md](WORKFLOW.md) for the short workflow and Arduino Library Manager registration steps.
-
-## Publish on macOS or Linux
+Fetch just the upstream CAD files with a sparse clone:
 
 ```sh
-./publish.sh            # Choose main project or libraries, then which library
-./publish.sh libraries  # Publish both libraries
-./publish.sh main       # Commit and publish the PlatformIO + Arduino project
-./publish.sh main --commit-only  # Commit locally without pushing
+python3 scripts/fetch_3d_models.py
 ```
 
-Requires Bash (macOS’s built-in Bash 3.2 is supported), Git, and Python 3 on PATH. Run from a normal shell or VS Code’s terminal; no macOS-specific paths or GitHub CLI are required.
+The extracted board model is `hardware/Polverine/DOCS/Polverine.stp`. The helper records the upstream commit and keeps the license. It refuses to overwrite an existing folder. These downloaded files are ignored by the main repository. See **[3D model instructions](docs/3D_MODELS.md)** for manual sparse-clone commands and the community printable cover linked by BlackIoT. A STEP board model is a mechanical reference, not itself a printable enclosure.
 
-The script shows repository status and destinations, audits forbidden files, stages all changes in the selected repository and commits them before asking to push. Enter a commit message or press Enter for the suggested message. If that repository is already clean, it explicitly says the existing commit is ready to push. Main-project changes and library changes are committed separately. It inherits Git authentication from your terminal; VS Code being signed in must also provide Git access to your repositories. If needed, complete VS Code's GitHub authentication prompt. After each successful library push, the project pins that published commit. The script also offers to publish an Arduino version tag, independently for each library. The main project publishes to `https://github.com/mauringo/Polverine_Arduino_Examples.git`.
+## Maintain and publish independently
 
-For a read-only check: `./publish.sh libraries --check`. A failed push leaves local commits intact and can be retried.
-
-## Three independent repositories
-
-| Repository folder | GitHub destination |
-| --- | --- |
-| Project root (`.`) | [Polverine_Arduino_Examples](https://github.com/mauringo/Polverine_Arduino_Examples) |
-| `lib/BME690_unofficial` | [BME690-Arduino-lib-unofficial](https://github.com/mauringo/BME690-Arduino-lib-unofficial) |
-| `lib/BSEC3_unofficial` | [Bsec3-ArduinoLibrary-Unofficial](https://github.com/mauringo/Bsec3-ArduinoLibrary-Unofficial) |
-
-The root project and your two libraries each have their own Git history and origin. The 7Semi BMV080 source is also editable locally as a third-party dependency. Publishing the root project does not include any of these library sources. Run `./publish.sh` to select the destination.
-
-## Libraries in this workspace
-
-| Folder | Ownership |
-| --- | --- |
-| `lib/BME690_unofficial` | Separate Git clone of your BME690 library; Arduino metadata and sources at the repository root |
-| `lib/BSEC3_unofficial` | Separate Git clone of your BSEC3 library |
-| `lib/7Semi_BMV080` | Local 7Semi dependency downloaded by bootstrap; not published with this project |
-
-All three libraries live locally under `lib/` as editable source. Edit their `.h`, `.cpp`, and `.c` files directly; PlatformIO builds those sources in place. The entire `lib/` folder and generated Arduino library copies are excluded from the root project. The project contains only application code, board compensation tables, setup scripts, and dependency references. `libraries.json` records dependency URLs and starting commits. Bootstrap only downloads missing libraries and never overwrites existing source edits. It does not apply transformations or modify your source. **Publish both updated libraries before publishing the main project**, so its pinned commits are available to fresh clones. The GitHub repository names remain unchanged; install/clone them under the folder names above for Arduino IDE use.
+The main project and the two unofficial libraries remain three independent repositories. Default builds use releases; **[WORKFLOW.md](WORKFLOW.md)** explains how to opt into editable source builds under ignored `lib/`, release a library, then update the main project's dependency versions. No patches are applied. Publishing this project does not publish library sources.
 
 ```sh
-python3 scripts/repos.py status
-python3 scripts/repos.py diff bsec3
-python3 scripts/repos.py commit bsec3 -m "Describe your change"
-python3 scripts/repos.py push bsec3
-# Other targets: bme690 or example
-python3 scripts/repos.py audit all
+./publish.sh                         # Menu: project or libraries, then which library
+./publish.sh main --commit-only      # Commit the main project locally
+./publish.sh main                    # Commit and push the main project
+./publish.sh libraries --check       # Read-only status/audit
 ```
 
-Commit and push require an explicit target. Push checks the index and reachable Git history for ZIPs and binary files, then pushes only the current branch. The root project origin is `https://github.com/mauringo/Polverine_Arduino_Examples.git`. After future library changes, publish those changes first; the publisher automatically updates `libraries.json` only after successful library pushes.
+The publisher works with Bash 3.2+, Git and Python 3 on macOS/Linux. Library sources, SDK files, ZIPs and generated Arduino library copies stay out of the main repository. See [repository discovery metadata](docs/PROJECT_METADATA.md) for the suggested GitHub description and topics.
 
-## Bosch SDK files
+## Validation and credits
 
-Obtain SDKs directly from Bosch and accept their terms. The supplied ZIPs are retained locally. The BSEC installer selects the **BSEC 3.3.0.1 IAQ ESP32-S3** archive and installs all eight matching BME690 profiles locally. Legacy BME680/BME688 configurations are removed. The example explicitly selects `bme690_iaq_33v_3s_4d` (3.3 V, 3 seconds, 4-day calibration history) in `platformio.ini`, matching [BlackIoT’s reference firmware configuration](https://github.com/BlackIoT/Polverine/blob/main/deps/bsec3_lib.ini); see the BSEC3 library README for 1.8 V, 300-second, and 28-day options. The profile choice is fixed explicitly for this board rather than relying on library defaults. BMV080 uses SDK **11.2.0** headers and ESP32-S3 archives under ignored `private/bmv080/`. ZIPs, proprietary archives, and generated firmware are never committed.
+The registered release packages are tested with PlatformIO `espressif32@7.1.2` / Arduino ESP32 2.0.17 and Arduino ESP32 core 3.3.11. Compilation checks cover full JSON, BSEC-only and debug firmware, and the Arduino IDE sketch. Earlier hardware verification confirmed live BME690 and BMV080 output; a release-package rebuild does not establish long-term calibration accuracy.
 
-BME690 uses SDA 14, SCL 21, 100 kHz, address `0x76`. BMV080 uses SCK 12, MISO 13, MOSI 11, CS 10, 1 MHz. These match the [BlackIoT reference firmware](https://github.com/BlackIoT/Polverine). The board definition and its license are in `boards/`.
-
-Validated by compilation with PlatformIO `espressif32@7.1.2` and Arduino ESP32 2.0.17: full JSON firmware, BSEC-only JSON firmware, BME690 custom-pin I2C example, BSEC IAQ basic example, and BSEC state persistence example. Physical sensor communication and long-term calibration still need validation on a connected board. The Arduino IDE sketch also compiles with Espressif ESP32 core 3.3.11; other MCU architectures were not tested.
-
-Sources: [BME690](https://github.com/mauringo/BME690-Arduino-lib-unofficial), [BSEC3](https://github.com/mauringo/Bsec3-ArduinoLibrary-Unofficial), [7Semi BMV080](https://github.com/7semi-solutions/7Semi-BMV080-Particulate-Matter-Sensor).
-
-## VS Code controls
-
-Open this project folder in VS Code and enable the installed PlatformIO IDE extension. Run **Developer: Reload Window** from the Command Palette if its toolbar has not appeared. The status bar provides labeled Build, Upload, Serial, and Debug controls. Upload uses `polverine-full`; Debug uses `polverine-debug` and stops at `setup()` through the ESP32-S3 built-in USB JTAG interface. The same commands are available under Terminal → Run Task. Debug is also available through Run and Debug → Polverine USB JTAG → F5. Debugging has been compiled but not tested on attached hardware.
-
-## Generic library examples
-
-For your own wiring/board, start with each library's `examples/generic_i2c/generic_i2c.ino` rather than the Polverine-specific application. Both sketches explain board-default SDA/SCL pins, custom ESP32 GPIOs, the difference between pin numbers and I2C addresses, and measurement setup. Their READMEs distinguish raw-driver portability from BSEC's required platform-specific algorithm archive and RAM.
-
-Prepared releases: BME690 **1.4.1**, BSEC3 **1.13.1**. The generic raw sketch compiles on Arduino Uno and ESP32-S3; the generic BSEC sketch compiles on ESP32, S2, S3 and C3. Physical measurements remain unvalidated. Publish the libraries through `./publish.sh libraries`, then the main project, to update its pinned revisions.
-
-If no BME690 records appear, watch the JSON status records. `stage` identifies `begin`, `set_config`, `subscription`, `run`, or a periodic wait/error diagnostic. `bsec_status` and `sensor_status` are the actual error codes; `output_count` counts received BSEC packets. Forced-mode samples are now collected after measurement plus heater time, and pressure stays in Pa.
-
-Hardware verification of the BME-output fix: the connected Polverine accepted initialization, the 3.3 V / 3-second / 4-day profile and the corrected output subscription with status 0. Eight BME JSON packets and one BMV packet were captured in a 22-second observation. This confirms live output, not long-term calibration. The old breath-VOC subscription returned `BSEC_E_CONFIG_FEATUREMISMATCH` (-35) and prevented all BME callbacks; it has been removed.
-
-The selected compensation table adjusts BSEC's reported temperature and humidity; it does not cool the hardware. At a raw 40 °C, this Wi-Fi/60-second table supplies a 5.902 °C heat-source offset (the previous USB/30-second table supplied 9.874 °C). Switching tables can therefore increase the reported temperature. Actual thermal behavior should be checked after the board stabilizes.
-
-Local temperature calibration: `TEMPERATURE_CALIBRATION_EXTRA_C` is currently **14.0 °C**, based on the user's approximate 39 °C reported / 25 °C room comparison. It is added to the original Wi-Fi table's BSEC heat-source offset; original coefficients are preserved. BSEC therefore recalculates both temperature and humidity. JSON includes the total heat-source offset and this extra adjustment. This is a provisional single-point calibration for this board/workload, not a validated correction across all ambient temperatures. Refine it against a reference thermometer after stabilization; zero disables the extra correction. Physical board heating is unchanged.
+Hardware, board definitions and compensation reference: [BlackIoT Polverine](https://github.com/BlackIoT/Polverine). Particulate wrapper: [7Semi BMV080](https://github.com/7semi-solutions/7Semi-BMV080-Particulate-Matter-Sensor). Bosch Sensortec owns the underlying BME68x/BSEC software and proprietary algorithms. Review the retained source licenses and Bosch SDK terms before reuse. This is personal experimental work provided as-is.

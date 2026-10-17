@@ -1,59 +1,77 @@
-# Maintain here, release separately
+# Maintain here, publish the libraries separately
 
-This project is the development and test workspace. Edit the actual source directly:
+Normal users follow the [Arduino guide](Arduino_project/README.md) or the release-based PlatformIO setup in [README.md](README.md). Library Manager now includes both unofficial libraries at **0.0.1**. No registry submission is needed again for future versions.
 
-- `src/main.cpp`: PlatformIO example.
-- `lib/BME690_unofficial/src/`: BME690 library source.
-- `lib/BSEC3_unofficial/src/`: BSEC3 library source.
-- `lib/7Semi_BMV080/src/`: third-party 7Semi dependency source.
+## Three independent repositories
 
-The main repository and your two library repositories are independent. Library sources stay local under ignored `lib/`; the main project stores only dependency URLs and commit references. No patches are used.
+| Folder | GitHub repository |
+| --- | --- |
+| Project root | [mauringo/Polverine_Arduino_Examples](https://github.com/mauringo/Polverine_Arduino_Examples) |
+| `lib/BME690-Arduino-lib-unofficial` | [mauringo/BME690-Arduino-lib-unofficial](https://github.com/mauringo/BME690-Arduino-lib-unofficial) |
+| `lib/Bsec3-ArduinoLibrary-Unofficial` | [mauringo/Bsec3-ArduinoLibrary-Unofficial](https://github.com/mauringo/Bsec3-ArduinoLibrary-Unofficial) |
 
-## Normal work
+The two library folders contain real Git checkouts and editable source. The main repository ignores all of `lib/`. The third-party BMV080 wrapper is downloaded under `lib/Polverine_BMV080_Arduino` by the maintenance bootstrap for compatibility with the existing workspace; its public Arduino name is **7Semi BMV080**. It is not one of the two libraries published by this project's menu. No source patches are generated or applied.
 
-1. Edit the library source here.
-2. Build/test the project against that source: `pio run`.
-3. For an Arduino release, update `version` in that library's **both** `library.properties` and `library.json`.
-4. Run `./publish.sh` and choose libraries, then BME690, BSEC3, or both.
-5. The script commits your source changes and pushes each selected repository separately. After a successful push it updates the main project's `libraries.json` to that exact commit.
-6. Choose whether to publish an Arduino version tag when asked. The tag comes from the library's version (`v1.4.0`, for example). Existing tags are never moved to another commit.
-7. Run `./publish.sh` again and choose the main project to publish the examples and updated dependency references.
+`libraries.json` records the **development checkout** URLs and starting revisions. `platformio.ini` records the **user build** releases. Publishing a library updates its recorded development revision but does not silently change a released dependency version for end users.
 
-Publish BME690 before BSEC3 when a release introduces a new BME690 dependency requirement. Keep BSEC3's dependency version in `library.properties` consistent with that requirement.
+## Build directly from library source
 
-## Arduino IDE
+From the project root:
 
-Each of your library repositories is an independently installable Arduino library, with metadata, `src/`, examples and licenses at its root. BSEC3 still requires the user to obtain/install the Bosch SDK separately.
-
-`Arduino_project/libraries/` contains generated local copies for Arduino IDE use, not a second source of truth. After editing libraries, regenerate those copies using `Arduino_project/prepare_libraries.py` and copy the result into your sketchbook. The script refuses to overwrite existing copies; move/remove the generated directory before regenerating. Always maintain source under `lib/`.
-
-The `.ino` and PlatformIO example are separate application files. When changing their behavior, apply the same change to both, including the adjacent compensation headers if those change.
-
-## Arduino Library Manager
-
-Pushing source and a version tag to each GitHub repository is separate from inclusion in Arduino Library Manager. For first-time registration, submit **each library URL separately** to the [Arduino library registry](https://github.com/arduino/library-registry#adding-a-library-to-library-manager). After acceptance, Arduino indexes eligible tagged versions. This script does not submit registry pull requests or claim registration has completed.
-
-GitHub releases contain source only. Bosch SDK binaries, ZIPs, generated Arduino library copies, and compiled firmware are excluded from all repository pushes.
-
-## First Library Manager submission: exact steps
-
-1. Run `./publish.sh libraries`. Commit the new example links and answer **yes** when asked to publish each Arduino version tag. Current prepared versions are BME690 `1.4.1` and BSEC3 `1.13.1`; keep `library.properties` and `library.json` aligned.
-2. Run `./publish.sh main` to publish the examples project and the updated dependency references.
-3. Fork `https://github.com/arduino/library-registry` and create a submission branch.
-4. Edit `repositories.txt` in that fork. Add these two repository URLs on separate lines, leaving other entries unchanged:
-
-```text
-https://github.com/mauringo/BME690-Arduino-lib-unofficial
-https://github.com/mauringo/Bsec3-ArduinoLibrary-Unofficial
+```sh
+python3 scripts/repos.py bootstrap
+python3 scripts/install_bsec.py /path/to/bsec_v3-3-0-1.zip --library-dir lib/Bsec3-ArduinoLibrary-Unofficial
+python3 scripts/install_bmv080.py /path/to/bmv080-sdk-v11-2-0.zip
+pio run -e polverine-dev
 ```
 
-5. Open a pull request from that branch to `arduino/library-registry:main`. Both libraries can be submitted in the same PR, as separate registry entries. Do not submit `Polverine_Arduino_Examples` as a library.
-6. Follow the bot's checks and resolve any reported errors. After acceptance, search Arduino Library Manager for `BME690_unofficial` and `BSEC3_unofficial`.
+Bootstrap downloads missing clones and checks out recorded commits. It never overwrites an existing folder or local edits. Edit `.h`, `.cpp` and `.c` files directly under `lib/`; `polverine-dev` compiles those sources in place. Use `pio run -e polverine-dev -t upload` when intentionally testing development code on hardware. Default `polverine-full`, `polverine-bsec3` and `polverine-debug` use published packages under `.pio/libdeps/` and do not pick up `lib/` changes.
 
-For later releases: increase the version in both metadata files, commit, push, and publish a new version tag. No new registration PR is needed. Refer to [Arduino's current registration instructions](https://github.com/arduino/library-registry#adding-a-library-to-library-manager) and [release requirements](https://github.com/arduino/library-registry/blob/main/FAQ.md#update-requirements).
+To inspect changes:
 
-The library source packages exclude Bosch binaries and ZIPs. BSEC3 users must still download the SDK separately and follow its installation instructions, even after installing the wrapper through Library Manager. Registration is subject to Arduino's validation; a successful GitHub push alone does not complete it.
+```sh
+python3 scripts/repos.py status
+python3 scripts/repos.py diff bsec3
+python3 scripts/repos.py diff bme690
+python3 scripts/repos.py audit all
+```
 
-## Commit without publishing
+Keep `src/main.cpp` and `Arduino_project/Arduino_project.ino` behavior aligned. The `.ino` has four leading defines replacing the PlatformIO build flags. Keep each copy of the three compensation/settings headers and BlackIoT license aligned too.
 
-Run `./publish.sh main --commit-only` for the main project or `./publish.sh libraries --commit-only` for both libraries. The script stages the selected repositories' source changes, accepts a message (Enter uses the suggested message), then commits locally without requiring a remote or authentication. A clean repository reports that it already has no uncommitted source changes. Library pushes update `libraries.json` in the main project; commit/publish the main project separately afterward.
+## Test development libraries with Arduino IDE
+
+Library Manager is the normal installation method. For testing unpublished source changes only:
+
+1. Prepare the development sources/SDKs using the commands above.
+2. Run `python3 Arduino_project/prepare_libraries.py` to assemble local copies under ignored `Arduino_project/libraries/`.
+3. Move the existing Library Manager copies of these libraries outside your sketchbook's `libraries/` folder to avoid duplicates; retain a backup.
+4. Copy the generated folders directly into the sketchbook's `libraries/` folder and restart IDE.
+5. Test the sketch. Keep editing the actual nested Git sources under `lib/`, not the generated copies.
+6. To return to released packages, move development copies outside the sketchbook, reinstall the published versions through Library Manager and rerun `scripts/setup_arduino.py`.
+
+The preparation script refuses to overwrite existing generated folders. Move the old `Arduino_project/libraries/` elsewhere before regenerating after changes. These copies contain local Bosch SDK files: do not distribute them.
+
+## Publish a library release
+
+1. Complete changes and test against editable source with `polverine-dev` and the relevant basic/generic Arduino examples.
+2. Increase `version` in **both** `library.properties` and `library.json` in the changed library. Keep their names/versions equal. Update BSEC3's BME690 dependency requirement if necessary; publish BME690 first when introducing a new dependency requirement.
+3. Run `./publish.sh`, choose **libraries**, then **BME690**, **BSEC3**, or **both**.
+4. The script audits prohibited files, stages changes in each selected repository, asks for a commit message (Enter accepts its suggestion), and commits. It asks before pushing. Git authentication is inherited from your shell/VS Code environment.
+5. After a successful library push, `libraries.json` in the main project records the pushed commit. The main project is committed separately.
+6. Accept the script's offer to publish the version tag. The tag is derived from metadata, for example `v0.0.2`. Never move a published tag: use a new version for new source.
+7. Arduino's registry periodically indexes eligible new tags for these already-registered repositories. Check [the live index](https://downloads.arduino.cc/libraries/library_index.json.gz) or Library Manager for the new name/version. A GitHub push is not proof that Arduino has indexed the release.
+8. After the new version is indexed, update the release references in `platformio.ini`, expected versions in `scripts/setup_arduino.py`, and version tables/commands in the READMEs. If BSEC3's manifest changes its required BME690 tag, align the project's BME690 tag with it. Re-run SDK preparation and build against the actual downloaded release packages.
+9. Run `./publish.sh main` to commit and push the updated example/documentation independently.
+
+The libraries remain Mauro Riboni's personal unofficial hobby projects, adapted from Bosch BME68x and BSEC2. Preserve Bosch attribution, original licenses and the private-work disclaimer. Registry guidance: [Arduino release requirements](https://github.com/arduino/library-registry/blob/main/FAQ.md#update-requirements).
+
+## Commit or audit without pushing
+
+```sh
+./publish.sh                         # Interactive destination selector
+./publish.sh main --commit-only      # Local commit of the main project
+./publish.sh libraries --commit-only # Local commits in both libraries
+./publish.sh libraries --check       # Read-only status and forbidden-file audit
+```
+
+Bash 3.2+, Git and Python 3 are sufficient on macOS/Linux; GitHub CLI is not required. A clean repository explicitly reports no pending changes. Failed pushes retain local commits for retry. The publisher audits tracked files and reachable history for ZIPs and compiled binaries. The root audit also rejects library sources/generated copies; `.gitignore` excludes the downloaded CAD subtree, SDKs and PlatformIO build products.
